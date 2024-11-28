@@ -14,11 +14,11 @@ const registerUsers = async (req, res)=> {
         const existingEmail = await Users.findOne({ email })
         const existingUsername = await Users.findOne({ username })
         if (existingEmail){
-            res.status(400).json({message: "User with this email already exists"})
+            return res.status(400).json({message: "User with this email already exists"})
         }
 
         if (existingUsername){
-            res.status(400).json({message: "User with this username already exists"})
+            return res.status(400).json({message: "User with this username already exists"})
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,16 +32,19 @@ const registerUsers = async (req, res)=> {
 
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'Strict'
-        })
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000 // 15 minutes
+        });
+        
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'Strict'
-        })
+            secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+            sameSite: 'strict', // Protect against CSRF
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days (adjust as needed)
+        });
 
-        const { password: _, refreshToken: __, ...userData} = newUser.toObject()
+        const { password: _, refreshToken: __, role: ___, ...userData} = newUser.toObject()
         res.status(201).json({message: 'User registerd successfully', user: userData})
 
     } catch (error){

@@ -7,6 +7,7 @@ const errorHandler = (err, req, res, next)=>{
         statusCode,
         message
     })
+    next(err)
 }
 
 module.exports = errorHandler
